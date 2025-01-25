@@ -150,5 +150,7 @@ export const addToSettings = async (db: SQLite.SQLiteDatabase, settings: Setting
 
 // Needed
 export const deleteFromNotes = async (db: SQLite.SQLiteDatabase, id: number) => {
-    await db.runAsync(`DELETE FROM notes WHERE id = ${id};`);
+    await db.execAsync(`
+        DELETE FROM notes WHERE id = ${id};
+        DELETE FROM noterows WHERE note = ${id};`); // Too lazy to change database settings, so this will do for now
 }

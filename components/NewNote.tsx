@@ -22,7 +22,7 @@ export default function NewNote(props: Props){
         
         navigation.navigate("NoteView", {
             noteID: result.lastInsertRowId,
-            noteTitle: "Title",
+            noteTitle: "",
             rows: [],
             settings: settings
         })

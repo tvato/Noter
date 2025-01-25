@@ -30,7 +30,6 @@ export default function NoteView({ route, navigation }: NoteViewProp){
     }, [settings.settings])
 
     const updateTitle = async () => {
-        // Somehow this does not work.... FIX IT
         const db = await getDBConnection();
         await updateNotes(db, title, route.params.noteID)
     }
@@ -42,6 +41,8 @@ export default function NoteView({ route, navigation }: NoteViewProp){
                 value={title}
                 onChangeText={setTitle}
                 onEndEditing={updateTitle}
+                placeholder="Title"
+                placeholderTextColor={settings.getSettings().checkedTextColor}
             />
             {rows.map((row) => (
                 row.checked ? null :
