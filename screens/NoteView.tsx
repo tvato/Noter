@@ -47,19 +47,20 @@ export default function NoteView({ route, navigation }: NoteViewProp){
             {rows.map((row) => (
                 row.checked ? null :
                     <CheckboxRow
+                        noteID={route.params.noteID}
                         rows={row}
                         settings={settings}
                         key={row.id}
                     />
             ))}
             <NewItem
-                row={rows}
                 noteId={route.params.noteID}
                 settings={settings}
             />
             {rows.map((row) => (
                 row.checked ?
                     <CheckboxRow
+                        noteID={route.params.noteID}
                         rows={row}
                         settings={settings}
                         key={row.id}

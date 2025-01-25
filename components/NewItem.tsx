@@ -4,17 +4,15 @@ import Setting from "@/db_tools/Setting";
 import { Rows } from "@/constants/types";
 
 type Props = {
-    row: Rows[];
     noteId: number;
     settings: Setting;
 }
 
-export default function NewItem({row, noteId, settings}: Props){
+export default function NewItem({noteId, settings}: Props){
     const spawnNewRow = async () => {
         const db = await getDBConnection();
         await insertIntoNoterow(db, "", noteId, false);
     }
-
     return (
         <SafeAreaView style={styles.container} >
             <Pressable style={styles.pressable} onPress={spawnNewRow} >
