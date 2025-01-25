@@ -1,4 +1,4 @@
-import { deleteFromRows, getDBConnection, updateRowChecked, updateRowContent } from "@/db_tools/notes";
+import { deleteFromRows, getDBConnection, insertIntoNoterow, updateRowChecked, updateRowContent } from "@/db_tools/notes";
 import { useEffect, useState } from "react";
 import { Image, Pressable, SafeAreaView, StyleSheet, Text, TextInput } from "react-native"
 import Checkbox from "expo-checkbox"
@@ -6,6 +6,7 @@ import Setting from "@/db_tools/Setting";
 import { Rows } from "@/constants/types";
 
 type Props = {
+    noteID: number;
     rows: Rows;
     settings: Setting;
 }
@@ -14,6 +15,7 @@ export default function CheckboxRow(props: Props){
     const [text, setText] = useState(props.rows.content);
     const [checked, setChecked] = useState(props.rows.checked);
     const [settings, setSettings] = useState<Setting>(props.settings);
+    const [isFocused, setIsFocused] = useState(false);
 
     const removeRow = async () => {
         const db = await getDBConnection();
@@ -22,6 +24,10 @@ export default function CheckboxRow(props: Props){
     const addToDatabase = async () => {
         const db = await getDBConnection();
         await updateRowContent(db, text, props.rows.id);
+    }
+    const spawnNew = async () => {
+        const db = await getDBConnection();
+        await insertIntoNoterow(db, "", props.noteID, false);
     }
     useEffect(() => {
         const handleCheckbox = async () => {
@@ -50,6 +56,8 @@ export default function CheckboxRow(props: Props){
                 value={text}
                 onChangeText={setText}
                 onEndEditing={addToDatabase}
+                onSubmitEditing={spawnNew}
+                autoFocus={true}
             />
             }
             <Pressable onPress={removeRow} style={styles.pressable} >
