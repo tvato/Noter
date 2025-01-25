@@ -2,7 +2,7 @@ import { RootStackParamList, Rows } from "@/constants/types";
 import { getDBConnection, getRowsByNoteID } from "@/db_tools/notes";
 import Setting from "@/db_tools/Setting";
 import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useState } from "react";
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
@@ -12,7 +12,7 @@ type Props = {
     settings: Setting;
 }
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">
+type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Home">
 
 export default function Note(props: Props){
     const navigation = useNavigation<HomeScreenNavigationProp>();

@@ -1,7 +1,6 @@
 import NoteView from '@/screens/NoteView';
 import HomeScreen from "@/screens/HomeScreen"
-import { createStackNavigator } from "@react-navigation/stack"
-import { StyleSheet } from 'react-native';
+import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { RootStackParamList } from '@/constants/types';
 import SettingsScreen from '@/screens/SettingsScreen';
 import SettingsButton from '@/components/SettingsButton';
@@ -9,7 +8,7 @@ import { useState } from 'react';
 import Setting from '@/db_tools/Setting';
 import DeleteNoteButton from '@/components/DeleteNoteButton';
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator(){
     const [settings, setSettings] = useState(new Setting());
@@ -34,5 +33,3 @@ export default function AppNavigator(){
         </Stack.Navigator>
     );
 }
-
-const styles = StyleSheet.create({});
