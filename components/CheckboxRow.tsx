@@ -1,6 +1,6 @@
 import { deleteFromRows, getDBConnection, insertIntoNoterow, updateRowChecked, updateRowContent } from "@/db_tools/notes";
 import { useEffect, useState } from "react";
-import { Image, Pressable, SafeAreaView, StyleSheet, Text, TextInput } from "react-native"
+import { Image, Keyboard, Pressable, SafeAreaView, StyleSheet, Text, TextInput } from "react-native"
 import Checkbox from "expo-checkbox"
 import Setting from "@/db_tools/Setting";
 import { Rows } from "@/constants/types";
@@ -15,7 +15,16 @@ export default function CheckboxRow(props: Props){
     const [text, setText] = useState(props.rows.content);
     const [checked, setChecked] = useState(props.rows.checked);
     const [settings, setSettings] = useState<Setting>(props.settings);
-    const [isFocused, setIsFocused] = useState(false);
+
+    // Workaround for removing focus of a <TextInput> element on back button press
+    useEffect(() => {
+        const hideKeyboard = Keyboard.addListener("keyboardDidHide", () => {
+            Keyboard.dismiss();
+        })
+        return () => {
+            hideKeyboard.remove();
+        }
+    })
 
     const removeRow = async () => {
         const db = await getDBConnection();
