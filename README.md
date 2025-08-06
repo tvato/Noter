@@ -12,3 +12,10 @@ Some pics might come later.
 - [ ] Remove keyboard from blocking last items of the list
 - [ ] Better coloring and font
 
+### Future plans
+- Make a widget
+- Make multiple note types:
+    - TODO -list
+    - Text note
+    - Drawing note?
+    - Voice note?
