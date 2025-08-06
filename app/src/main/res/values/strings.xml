@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Noter</string>
+
+    <!-- Content descriptions -->
+    <string name="description_add_note">Add note</string>
+    <string name="description_unindent">Unindent</string>
+    <string name="description_indent">Indent</string>
+    <string name="description_delete_item">Delete item</string>
+    <string name="description_add_item">Add item</string>
+    <string name="description_theme_switch">Dark/Light mode</string>
+    <string name="description_delete_note">Delete note</string>
+    <!-- Content descriptions -->
+</resources>
