@@ -1,21 +1,37 @@
 package com.example.noter.ui.note
 
+import android.util.Log
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +39,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,6 +50,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +58,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
@@ -49,8 +68,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
@@ -63,6 +84,8 @@ import com.example.noter.ui.AppViewModelProvider
 import com.example.noter.ui.components.AppBar
 import com.example.noter.ui.navigation.NavigationDestination
 import com.example.noter.ui.theme.NoterTheme
+import kotlinx.coroutines.launch
+import kotlinx.serialization.builtins.serializer
 
 object NoteScreenDestination: NavigationDestination{
     override val route = "note_details"
@@ -109,6 +132,8 @@ fun NoteScreen(
                 saveNote = viewModel::saveNote
             )
         },
+        modifier = Modifier
+            .imePadding()
     ){ innerPadding ->
         NoteBody(
             uiState = uiState,
@@ -149,7 +174,7 @@ fun NoteBody(
         )
         LazyColumn(
             modifier = Modifier.padding(0.dp),
-            state = listState
+            //state = listState,
         ){
             // TODO: Scroll to bottom, also keyboard hides bottom items
             itemsIndexed(uiState.contents){ index, content ->
@@ -162,8 +187,6 @@ fun NoteBody(
                     saveNote = saveNote,
                     addItem = addItem,
                     contentsSize = uiState.contents.size,
-                    listState = listState,
-                    index = index
                 )
             }
 //            uiState.contents.forEachIndexed{ index, content ->
@@ -205,10 +228,7 @@ fun NoteTitle(
         onValueChange = {
             updateTitleState(it)
         },
-        textStyle = TextStyle(
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = MaterialTheme.typography.titleMedium.fontFamily,
+        textStyle = MaterialTheme.typography.titleLarge.copy(
             color = MaterialTheme.colorScheme.onSecondaryContainer
         ),
         keyboardOptions = KeyboardOptions(
@@ -223,7 +243,8 @@ fun NoteTitle(
             }
         ),
         modifier = Modifier
-            .padding(start = 25.dp, bottom = 5.dp, top = 20.dp)
+            .fillMaxWidth()
+            .padding(start = 25.dp, bottom = 10.dp, top = 15.dp)
     )
 }
 
@@ -236,9 +257,7 @@ fun NoteContentRow(
     newItem: MutableState<Boolean>,
     saveNote: () -> Unit,
     addItem: (Int, Int) -> Unit,
-    contentsSize: Int,
-    listState: LazyListState,
-    index: Int
+    contentsSize: Int
 ){
     var isFocused by remember { mutableStateOf(false) }
     var offset = content.offset
@@ -256,13 +275,9 @@ fun NoteContentRow(
     Row(
         modifier = Modifier
             .height(40.dp)
-            .onFocusChanged {
-                isFocused = it.isFocused
-            }
+            .onFocusChanged { isFocused = it.isFocused }
             .background(MaterialTheme.colorScheme.tertiaryContainer)
-            .offset {
-                IntOffset(offset, 0)
-            }
+            .offset { IntOffset(offset, 0) }
     ){
         if(isFocused) {
             if(offset > 0) Icon(
@@ -357,8 +372,7 @@ fun NoteContentRow(
                         line = content.line
                     ), content.id)
             },
-            textStyle = TextStyle(
-                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             ),
             keyboardOptions = KeyboardOptions(
@@ -374,7 +388,7 @@ fun NoteContentRow(
                     focusManager.moveFocus(FocusDirection.Down)
                 }
             ),
-            modifier = Modifier
+            modifier =  Modifier
                 .align(Alignment.CenterVertically)
                 .weight(1f)
                 .focusRequester(newItemFocus)
