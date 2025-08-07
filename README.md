@@ -8,8 +8,8 @@ Mainly to learn kotlin better. Also to have an app for note taking and TODO list
 Some pics might come later.
 
 ## TODO
-- [ ] Scrollable note
-- [ ] Remove keyboard from blocking last items of the list
+- [x] Scrollable note
+- [x] Remove keyboard from blocking last items of the list
 - [ ] Better coloring and font
 
 ### Future plans
