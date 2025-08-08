@@ -1,4 +1,4 @@
-package com.example.noter.ui.note
+package com.example.noter.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

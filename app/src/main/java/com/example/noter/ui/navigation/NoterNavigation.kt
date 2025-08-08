@@ -7,8 +7,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.noter.ui.note.HomeScreen
-import com.example.noter.ui.note.HomeScreenDestination
+import com.example.noter.ui.HomeScreen
+import com.example.noter.ui.HomeScreenDestination
 import com.example.noter.ui.note.NoteScreen
 import com.example.noter.ui.note.NoteScreenDestination
 
