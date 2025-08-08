@@ -61,7 +61,7 @@ import com.example.noter.ui.navigation.NavigationDestination
 import com.example.noter.ui.theme.NoterTheme
 
 object TodoNoteScreenDestination: NavigationDestination{
-    override val route = "note_details"
+    override val route = "todo_note"
     const val NOTE_ID = "noteId"
     val routeWithArgs = "$route/{$NOTE_ID}"
 }
@@ -134,7 +134,7 @@ fun NoteBody(
     Column(
         modifier = Modifier
             .padding(innerPadding)
-            .background(MaterialTheme.colorScheme.tertiaryContainer)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
     ){
         NoteTitle(
             uiState = uiState,
@@ -225,7 +225,7 @@ fun NoteContentRow(
         modifier = Modifier
             .height(40.dp)
             .onFocusChanged { isFocused = it.isFocused }
-            .background(MaterialTheme.colorScheme.tertiaryContainer)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .offset { IntOffset(offset, 0) }
     ){
         if(isFocused) {
@@ -318,7 +318,7 @@ fun NoteContentRow(
                     ), content.id)
             },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onTertiaryContainer
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             ),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
@@ -365,18 +365,18 @@ fun AddItem(
             addItem(0, -1)
             newItem.value = true
         },
-        color = MaterialTheme.colorScheme.tertiaryContainer
+        color = MaterialTheme.colorScheme.secondaryContainer
     ){
         Row{
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.plus),
                 contentDescription = stringResource(R.string.description_add_item),
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
             Text(
                 text = "Add item",
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
@@ -395,7 +395,7 @@ fun TodoNoteScreenPreview(){
         Content(3, 1, "Preview line 3", false, 0, 1)
     )
     val uiState = NoteState(
-        Note(1,"Preview title"),
+        Note(1,"Preview title", 1),
         contents
     )
 
