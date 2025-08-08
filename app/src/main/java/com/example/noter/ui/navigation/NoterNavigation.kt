@@ -9,6 +9,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.noter.ui.HomeScreen
 import com.example.noter.ui.HomeScreenDestination
+import com.example.noter.ui.note.TextNoteScreen
+import com.example.noter.ui.note.TextNoteScreenDestination
 import com.example.noter.ui.note.TodoNoteScreen
 import com.example.noter.ui.note.TodoNoteScreenDestination
 
@@ -25,7 +27,7 @@ fun NoterNavHost(
     ) {
         composable(route = HomeScreenDestination.route) {
             HomeScreen(
-                navigateToNote = { navController.navigate("${TodoNoteScreenDestination.route}/${it}") },
+                navigateToNote = { navController.navigate("${TextNoteScreenDestination.route}/${it}") },
                 switchMode
             )
         }
@@ -36,6 +38,16 @@ fun NoterNavHost(
             })
         ) {
             TodoNoteScreen(
+                navigateBack = { navController.navigateUp() }
+            )
+        }
+        composable(
+            route = TextNoteScreenDestination.routeWithArgs,
+            arguments = listOf(navArgument(TextNoteScreenDestination.NOTE_ID){
+                type = NavType.IntType
+            })
+        ){
+            TextNoteScreen(
                 navigateBack = { navController.navigateUp() }
             )
         }
