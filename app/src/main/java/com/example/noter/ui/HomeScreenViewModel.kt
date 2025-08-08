@@ -30,7 +30,8 @@ class HomeScreenViewModel(
 
     fun addNote(){
         val newNote = Note(
-            title = "New note"
+            title = "New note",
+            type = 1
         )
 
         viewModelScope.launch {

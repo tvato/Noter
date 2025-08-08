@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class NoteState(
-    val note: Note = Note(0, ""),
+    val note: Note = Note(0, "", 1),
     val contents: List<Content> = listOf()
 )
 
