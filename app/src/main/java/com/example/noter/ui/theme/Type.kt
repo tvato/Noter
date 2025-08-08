@@ -45,10 +45,10 @@ val DarkTypography = Typography(
 )
 
 val LightTypography = Typography(
-    titleMedium = DarkTypography.titleLarge.copy(
+    titleLarge = DarkTypography.titleLarge.copy(
         fontFamily = FontFamily( Font(R.font.amarante_regular) )
     ),
-    bodyMedium = DarkTypography.bodyLarge.copy(
-        fontFamily = FontFamily( Font(R.font.amaranth_regular) )
+    bodyLarge = DarkTypography.bodyLarge.copy(
+        fontFamily = FontFamily( Font(R.font.amaranth_regular)),
     )
 )
