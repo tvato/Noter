@@ -1,37 +1,20 @@
 package com.example.noter.ui.note
 
-import android.util.Log
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.displayCutoutPadding
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.isImeVisible
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -39,7 +22,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,7 +32,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,22 +39,16 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -84,8 +59,6 @@ import com.example.noter.ui.AppViewModelProvider
 import com.example.noter.ui.components.AppBar
 import com.example.noter.ui.navigation.NavigationDestination
 import com.example.noter.ui.theme.NoterTheme
-import kotlinx.coroutines.launch
-import kotlinx.serialization.builtins.serializer
 
 object NoteScreenDestination: NavigationDestination{
     override val route = "note_details"
@@ -132,8 +105,7 @@ fun NoteScreen(
                 saveNote = viewModel::saveNote
             )
         },
-        modifier = Modifier
-            .imePadding()
+        modifier = Modifier.imePadding()
     ){ innerPadding ->
         NoteBody(
             uiState = uiState,
@@ -158,7 +130,6 @@ fun NoteBody(
     addItem: (Int, Int) -> Unit
 ){
     val newItem = remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
 
     Column(
         modifier = Modifier
@@ -172,10 +143,7 @@ fun NoteBody(
             saveNote = saveNote,
             newItem = newItem
         )
-        LazyColumn(
-            modifier = Modifier.padding(0.dp),
-            //state = listState,
-        ){
+        LazyColumn(modifier = Modifier.padding(0.dp)){
             // TODO: Scroll to bottom, also keyboard hides bottom items
             itemsIndexed(uiState.contents){ index, content ->
                 NoteContentRow(
@@ -189,23 +157,6 @@ fun NoteBody(
                     contentsSize = uiState.contents.size,
                 )
             }
-//            uiState.contents.forEachIndexed{ index, content ->
-//                NoteContentRow(
-//                    updateContent = updateContent,
-//                    deleteContent = deleteContent,
-//                    content = content,
-//                    aboveOffset = if(index != 0) uiState.contents[index-1].offset else 0,
-//                    newItem = newItem,
-//                    saveNote = saveNote,
-//                    addItem = addItem,
-//                    contentsSize = uiState.contents.size
-//                )
-//            }
-//            AddItem(
-//                saveNote = saveNote,
-//                addItem = addItem,
-//                newItem = newItem
-//            )
         }
         AddItem(
             saveNote = saveNote,
@@ -225,9 +176,7 @@ fun NoteTitle(
 ){
     BasicTextField(
         value = uiState.note.title,
-        onValueChange = {
-            updateTitleState(it)
-        },
+        onValueChange = { updateTitleState(it) },
         textStyle = MaterialTheme.typography.titleLarge.copy(
             color = MaterialTheme.colorScheme.onSecondaryContainer
         ),
@@ -310,11 +259,8 @@ fun NoteContentRow(
                     .align(Alignment.CenterVertically)
                     .offset(x = 10.dp)
                     .clickable {
-                        if (aboveOffset == 0) {
-                            offset = 100
-                        } else {
-                            if (offset + aboveOffset <= aboveOffset + 100) offset += aboveOffset
-                        }
+                        if (aboveOffset == 0) { offset = 100 }
+                        else { if (offset + aboveOffset <= aboveOffset + 100) offset += aboveOffset }
                         updateContent(
                             Content(
                                 id = content.id,
@@ -356,8 +302,7 @@ fun NoteContentRow(
                 disabledUncheckedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                 disabledIndeterminateBorderColor = MaterialTheme.colorScheme.surfaceContainer,
             ),
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
+            modifier = Modifier.align(Alignment.CenterVertically)
         )
         BasicTextField(
             value = content.text,
@@ -398,17 +343,9 @@ fun NoteContentRow(
                 contentDescription = stringResource(R.string.description_delete_item),
                 modifier = Modifier
                     .padding(end = 10.dp)
-                    .offset {
-                        if (offset != 0) IntOffset(-offset, 0) else IntOffset(
-                            0,
-                            0
-                        )
-                    }
-                    .clickable(
-                        onClick = {
-                            deleteContent(content)
-                        })
-            )
+                    .offset { if (offset != 0) IntOffset(-offset, 0) else IntOffset(0, 0) }
+                    .clickable(onClick = { deleteContent(content) })
+        )
     }
 }
 
@@ -435,8 +372,7 @@ fun AddItem(
                 imageVector = ImageVector.vectorResource(R.drawable.plus),
                 contentDescription = stringResource(R.string.description_add_item),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
+                modifier = Modifier.align(Alignment.CenterVertically)
             )
             Text(
                 text = "Add item",
