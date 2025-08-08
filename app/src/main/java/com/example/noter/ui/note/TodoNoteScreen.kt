@@ -60,14 +60,14 @@ import com.example.noter.ui.components.AppBar
 import com.example.noter.ui.navigation.NavigationDestination
 import com.example.noter.ui.theme.NoterTheme
 
-object NoteScreenDestination: NavigationDestination{
+object TodoNoteScreenDestination: NavigationDestination{
     override val route = "note_details"
     const val NOTE_ID = "noteId"
     val routeWithArgs = "$route/{$NOTE_ID}"
 }
 
 @Composable
-fun NoteScreen(
+fun TodoNoteScreen(
     navigateBack: () -> Unit,
     canNavigateBack: Boolean = true,
     viewModel: NoteViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -388,7 +388,7 @@ fun AddItem(
 
 @PreviewLightDark
 @Composable
-fun NoteScreenPreview(){
+fun TodoNoteScreenPreview(){
     val contents: List<Content> = listOf(
         Content(1, 1, "Preview line 1", true, 0, 0),
         Content(2, 1, "Preview line 2", false, 0, 1),

@@ -24,7 +24,7 @@ class NoteViewModel(
     private val notesRepository: NotesRepository
 ): ViewModel() {
 
-    private val noteId: Int = checkNotNull(savedStateHandle[NoteScreenDestination.NOTE_ID])
+    private val noteId: Int = checkNotNull(savedStateHandle[TodoNoteScreenDestination.NOTE_ID])
 
     var noteState by mutableStateOf(NoteState())
 

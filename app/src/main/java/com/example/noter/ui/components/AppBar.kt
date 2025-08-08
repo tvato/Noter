@@ -58,7 +58,7 @@ fun AppBar(                                     // Used in HomeScreen.kt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppBar(                                     // Used in NoteScreen.kt
+fun AppBar(                                     // Used in TodoNoteScreen.kt
     navigateBack: () -> Unit,
     canNavigateBack: Boolean,
     deleteNote: () -> Unit,
