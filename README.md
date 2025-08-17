@@ -12,7 +12,7 @@ Some pics might come later.
 - [x] Remove keyboard from blocking last items of the list
 - [ ] Better coloring and font
 - [x] Text note
-- [ ] Update Floating button in HomeScreen
+- [x] Update Floating button in HomeScreen
 
 ### Future plans
 - Make a widget
