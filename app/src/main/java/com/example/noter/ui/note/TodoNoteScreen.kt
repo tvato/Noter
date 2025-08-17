@@ -60,12 +60,6 @@ import com.example.noter.ui.components.AppBar
 import com.example.noter.ui.navigation.NavigationDestination
 import com.example.noter.ui.theme.NoterTheme
 
-object TodoNoteScreenDestination: NavigationDestination{
-    override val route = "todo_note"
-    const val NOTE_ID = "noteId"
-    val routeWithArgs = "$route/{$NOTE_ID}"
-}
-
 @Composable
 fun TodoNoteScreen(
     navigateBack: () -> Unit,

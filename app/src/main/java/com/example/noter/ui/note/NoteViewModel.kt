@@ -10,6 +10,7 @@ import com.example.noter.data.Content
 import com.example.noter.data.Note
 import com.example.noter.data.NoteAndContent
 import com.example.noter.data.NotesRepository
+import com.example.noter.ui.navigation.NoteScreenDestination
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -24,7 +25,7 @@ class NoteViewModel(
     private val notesRepository: NotesRepository
 ): ViewModel() {
 
-    private val noteId: Int = checkNotNull(savedStateHandle[TodoNoteScreenDestination.NOTE_ID])
+    private val noteId: Int = checkNotNull(savedStateHandle[NoteScreenDestination.NOTE_ID])
 
     var noteState by mutableStateOf(NoteState())
 
