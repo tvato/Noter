@@ -7,14 +7,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,7 +30,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
@@ -48,7 +53,7 @@ object HomeScreenDestination: NavigationDestination {
 
 @Composable
 fun HomeScreen(
-    navigateToNote: (Int) -> Unit,
+    navigateToNote: (String) -> Unit,
     switchMode: () -> Unit,
     viewModel: HomeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ){
@@ -64,9 +69,9 @@ fun HomeScreen(
 
 @Composable
 fun HomeScreenContainer(
-    navigateToNote: (Int) -> Unit,
+    navigateToNote: (String) -> Unit,
     switchMode: () -> Unit,
-    addNote: () -> Unit,
+    addNote: (Byte) -> Unit,
     uiState: State<NoteUiState>
 ){
     Scaffold(
@@ -74,16 +79,9 @@ fun HomeScreenContainer(
             AppBar(switchMode)
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    addNote()
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.description_add_note)
-                )
-            }
+            CustomFloater(
+                addNote = addNote
+            )
         },
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -97,9 +95,69 @@ fun HomeScreenContainer(
 }
 
 @Composable
+fun CustomFloater(
+    addNote: (Byte) -> Unit
+){
+    val types = listOf(Icons.Default.AccountBox, Icons.Default.Build)
+    val noteMenuVisible = remember { mutableStateOf(false) }
+    Column{
+        if(noteMenuVisible.value) {
+            types.forEach{ type ->
+                FloaterItem(
+                    image = type,
+                    addNote = addNote
+                )
+            }
+        }else{
+            FloatingActionButton(
+                onClick = {
+                    noteMenuVisible.value = !noteMenuVisible.value
+                },
+                elevation = FloatingActionButtonDefaults.elevation(
+                    focusedElevation = 0.dp,
+                    hoveredElevation = 0.dp,
+                    pressedElevation = 0.dp,
+                    defaultElevation = 0.dp
+                )
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.plus),
+                    contentDescription = stringResource(R.string.description_add_note),
+                    modifier = Modifier.size(35.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FloaterItem(
+    image: ImageVector,
+    addNote: (Byte) -> Unit
+){
+    FloatingActionButton(
+        // TODO: Navigate after addNote...
+        onClick = {
+            if(image == Icons.Default.AccountBox){
+                addNote(0)
+            }else{
+                addNote(1)
+            }
+        },
+        modifier = Modifier
+            .padding(top = 5.dp)
+    ){
+        Icon(
+            imageVector = image,
+            contentDescription = null,
+        )
+    }
+}
+
+@Composable
 fun NoteList(
     uiState: State<NoteUiState>,
-    navigateToNote: (Int) -> Unit,
+    navigateToNote: (String) -> Unit,
     innerPadding: PaddingValues
 ){
     Column(
@@ -108,11 +166,12 @@ fun NoteList(
         LazyColumn(
             modifier = Modifier.padding(5.dp)
         ) {
-            //items(uiState.value.notesWithContent) { noteAndContent ->
             items(uiState.value.notesWithContent) { noteAndContent ->
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
-                    onClick = { navigateToNote(noteAndContent.note.id) }
+                    onClick = {
+                        navigateToNote("${noteAndContent.note.type}/${noteAndContent.note.id}")
+                    }
                 ) {
                     NoteBody(
                         noteAndContent = noteAndContent
@@ -167,7 +226,7 @@ fun ContentRow(
     Row(
         modifier = Modifier
             .height(40.dp)
-            .offset{
+            .offset {
                 IntOffset(content.offset, 0)
             }
     ){
@@ -190,14 +249,14 @@ fun ContentRow(
 fun HomeScreenPreview(){
     val noteList: MutableList<NoteAndContent> = mutableListOf(
         NoteAndContent(
-            Note(1, "Preview title 1"),
+            Note(1, "Preview title 1", 1),
             listOf(
                 Content(1, 1, "Preview text 1", true, 0, 0),
                 Content(2, 1, "Preview text 2", false, 0, 1)
             )
         ),
         NoteAndContent(
-            Note(1, "Preview title 2"),
+            Note(1, "Preview title 2", 1),
             listOf(
                 Content(3, 1, "Preview text 3", false, 0, 0),
                 Content(4, 1, "Preview text 4", true, 0, 1),
@@ -212,7 +271,7 @@ fun HomeScreenPreview(){
             navigateToNote = {},
             switchMode = {},
             addNote = {},
-            uiState = remember{mutableStateOf(NoteUiState(noteList))}
+            uiState = remember { mutableStateOf(NoteUiState(noteList)) }
         )
     }
 }

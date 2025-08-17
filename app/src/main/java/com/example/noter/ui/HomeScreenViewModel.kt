@@ -18,7 +18,6 @@ data class NoteUiState(
 class HomeScreenViewModel(
     private val notesRepository: NotesRepository
 ): ViewModel() {
-
     val uiState: StateFlow<NoteUiState> = notesRepository.getAllNotesWithContent()
         .map{
             NoteUiState(changeType(it))
@@ -28,13 +27,13 @@ class HomeScreenViewModel(
             initialValue = NoteUiState()
         )
 
-    fun addNote(){
+    fun addNote(type: Byte){
         val newNote = Note(
-            title = "New note",
-            type = 1
+            title = if(type.toInt() == 0) "New text note" else "New todo note",     // Just for debugging purposes
+            type = type
         )
 
-        viewModelScope.launch {
+        viewModelScope.launch{
             notesRepository.insertNote(newNote)
         }
     }
