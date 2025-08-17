@@ -10,9 +10,14 @@ import androidx.navigation.navArgument
 import com.example.noter.ui.HomeScreen
 import com.example.noter.ui.HomeScreenDestination
 import com.example.noter.ui.note.TextNoteScreen
-import com.example.noter.ui.note.TextNoteScreenDestination
 import com.example.noter.ui.note.TodoNoteScreen
-import com.example.noter.ui.note.TodoNoteScreenDestination
+
+object NoteScreenDestination: NavigationDestination{
+    override val route = "note"
+    const val NOTE_ID = "noteId"
+    const val TYPE = "type"
+    val routeWithArgs = "$route/{$TYPE}/{$NOTE_ID}"
+}
 
 @Composable
 fun NoterNavHost(
@@ -25,27 +30,32 @@ fun NoterNavHost(
         startDestination = HomeScreenDestination.route,
         modifier = modifier
     ) {
+        // No idea what I was doing here... but it works...
         composable(route = HomeScreenDestination.route) {
             HomeScreen(
-                navigateToNote = { navController.navigate("${TextNoteScreenDestination.route}/${it}") },
+                navigateToNote = { navController.navigate(route = "note/$it") },
                 switchMode
             )
         }
         composable(
-            route = TodoNoteScreenDestination.routeWithArgs,
-            arguments = listOf(navArgument(TodoNoteScreenDestination.NOTE_ID) {
-                type = NavType.IntType
-            })
+            route = "note/1/{noteId}",
+            arguments = listOf(
+                navArgument(NoteScreenDestination.NOTE_ID) {
+                    type = NavType.IntType
+                }
+            )
         ) {
             TodoNoteScreen(
                 navigateBack = { navController.navigateUp() }
             )
         }
         composable(
-            route = TextNoteScreenDestination.routeWithArgs,
-            arguments = listOf(navArgument(TextNoteScreenDestination.NOTE_ID){
-                type = NavType.IntType
-            })
+            route = "note/0/{noteId}",
+            arguments = listOf(
+                navArgument(NoteScreenDestination.NOTE_ID){
+                    type = NavType.IntType
+                }
+            )
         ){
             TextNoteScreen(
                 navigateBack = { navController.navigateUp() }
