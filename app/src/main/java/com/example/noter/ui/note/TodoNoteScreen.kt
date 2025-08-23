@@ -57,7 +57,6 @@ import com.example.noter.data.Content
 import com.example.noter.data.Note
 import com.example.noter.ui.AppViewModelProvider
 import com.example.noter.ui.components.AppBar
-import com.example.noter.ui.navigation.NavigationDestination
 import com.example.noter.ui.theme.NoterTheme
 
 @Composable

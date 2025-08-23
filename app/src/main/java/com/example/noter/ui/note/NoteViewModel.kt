@@ -106,6 +106,12 @@ class NoteViewModel(
         }
     }
 
+    fun addText(content: Content){
+        viewModelScope.launch{
+            notesRepository.insertContent(content)
+        }
+    }
+
     fun deleteNote(){
         viewModelScope.launch{
             notesRepository.deleteNote(noteState.note)
@@ -136,6 +142,31 @@ class NoteViewModel(
         )
     }
 
+    fun updateTextState(newText: String){
+        noteState = NoteState(
+            note = noteState.note,
+            contents = listOf(
+                if(noteState.contents.isEmpty()){
+                    Content(
+                        noteId = noteState.note.id,
+                        text = newText,
+                        checked = false,
+                        offset = 0,
+                        line = 0
+                    )
+                }else{
+                    noteState.contents[0].copy(text = newText)
+                }
+            )
+        )
+    }
+
+    fun saveTextNote(){
+        viewModelScope.launch {
+            notesRepository.updateNote(noteState.note)
+            notesRepository.updateContent(noteState.contents[0])
+        }
+    }
     fun saveNote(){
         viewModelScope.launch {
             notesRepository.updateNote(noteState.note)
@@ -146,5 +177,12 @@ class NoteViewModel(
 
 fun NoteAndContent.toNoteState(): NoteState = NoteState(
     note = this.note,
-    contents = this.contents.sortedBy { it.line }
+    contents = if(this.contents.isEmpty() && this.note.type.toInt() == 0) listOf(
+        Content(
+            noteId = this.note.id,
+            text = "",
+            checked = false,
+            offset = 0,
+            line = 0)
+    ) else this.contents.sortedBy { it.line }
 )
