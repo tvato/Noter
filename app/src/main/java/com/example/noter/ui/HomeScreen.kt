@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -137,6 +138,7 @@ fun FloaterItem(
 ){
     FloatingActionButton(
         // TODO: Navigate after addNote...
+        //       Also, change icons
         onClick = {
             if(image == Icons.Default.AccountBox){
                 addNote(0)
@@ -210,12 +212,35 @@ fun NoteBody(
                 modifier = Modifier.padding(0.dp)
             ){
                 noteAndContent.contents.forEach { content ->
-                    ContentRow(
-                        content = content,
-                    )
+                    if(noteAndContent.note.type.toInt() == 1) {
+                        ContentRow(
+                            content = content,
+                        )
+                    }else{
+                        TextContentRow(
+                            content = content
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TextContentRow(
+    content: Content
+){
+    Row(
+        modifier = Modifier
+            .heightIn(max = 120.dp, min = 40.dp)
+            .padding(start = 15.dp)
+    ){
+        Text(
+            text = content.text,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
     }
 }
 
@@ -225,7 +250,7 @@ fun ContentRow(
 ){
     Row(
         modifier = Modifier
-            .height(40.dp)
+            .height(30.dp)
             .offset {
                 IntOffset(content.offset, 0)
             }
@@ -249,10 +274,9 @@ fun ContentRow(
 fun HomeScreenPreview(){
     val noteList: MutableList<NoteAndContent> = mutableListOf(
         NoteAndContent(
-            Note(1, "Preview title 1", 1),
+            Note(1, "Preview title 1", 0),
             listOf(
-                Content(1, 1, "Preview text 1", true, 0, 0),
-                Content(2, 1, "Preview text 2", false, 0, 1)
+                Content(1, 1, "Long preview text to show something.\nHere some new lines.\nAnd stuff.\nAnd more stuff.\nAnd some more.", false, 0, 0)
             )
         ),
         NoteAndContent(
