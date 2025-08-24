@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.Checkbox
@@ -25,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -99,14 +98,18 @@ fun HomeScreenContainer(
 fun CustomFloater(
     addNote: (Byte) -> Unit
 ){
-    val types = listOf(Icons.Default.AccountBox, Icons.Default.Build)
+    val types = listOf(
+        R.drawable.text,
+       R.drawable.checkbox
+    )
     val noteMenuVisible = remember { mutableStateOf(false) }
     Column{
         if(noteMenuVisible.value) {
             types.forEach{ type ->
                 FloaterItem(
                     image = type,
-                    addNote = addNote
+                    addNote = addNote,
+                    noteMenuVisible = noteMenuVisible
                 )
             }
         }else{
@@ -133,25 +136,28 @@ fun CustomFloater(
 
 @Composable
 fun FloaterItem(
-    image: ImageVector,
-    addNote: (Byte) -> Unit
+    image: Int,
+    addNote: (Byte) -> Unit,
+    noteMenuVisible: MutableState<Boolean>
 ){
     FloatingActionButton(
         // TODO: Navigate after addNote...
         //       Also, change icons
         onClick = {
-            if(image == Icons.Default.AccountBox){
+            if(image == R.drawable.text){
                 addNote(0)
             }else{
                 addNote(1)
             }
+            noteMenuVisible.value = !noteMenuVisible.value
         },
         modifier = Modifier
             .padding(top = 5.dp)
     ){
         Icon(
-            imageVector = image,
+            painter = painterResource(image),
             contentDescription = null,
+            modifier = Modifier.size(45.dp)
         )
     }
 }
