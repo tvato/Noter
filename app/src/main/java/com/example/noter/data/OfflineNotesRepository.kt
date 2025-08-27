@@ -12,10 +12,6 @@ class OfflineNotesRepository(private val noteDao: NoteDao): NotesRepository {
     override fun getAllContentsStream(): Flow<List<Content>> = noteDao.getAllContents()
     override fun getContentStream(id: Int): Flow<Content> = noteDao.getContent(id)
 
-    //override suspend fun insertNoteAndContent(noteAndContent: NoteAndContent) = noteDao.insertNoteAndContent(noteAndContent)
-    //override suspend fun deleteNoteAndContent(noteAndContent: NoteAndContent) = noteDao.deleteNoteAndContent(noteAndContent)
-    //override suspend fun updateNoteAndContent(noteAndContent: NoteAndContent) = noteDao.updateNoteAndContent(noteAndContent)
-
     override suspend fun insertNote(note: Note): Long = noteDao.insertNote(note)
     override suspend fun deleteNote(note: Note) = noteDao.deleteNote(note)
     override suspend fun updateNote(note: Note) = noteDao.updateNote(note)
