@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxColors
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -39,6 +40,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
@@ -137,7 +139,6 @@ fun NoteBody(
             newItem = newItem
         )
         LazyColumn(modifier = Modifier.padding(0.dp)){
-            // TODO: Scroll to bottom, also keyboard hides bottom items
             itemsIndexed(uiState.contents){ index, content ->
                 NoteContentRow(
                     updateContent = updateContent,
@@ -147,15 +148,17 @@ fun NoteBody(
                     newItem = newItem,
                     saveNote = saveNote,
                     addItem = addItem,
-                    contentsSize = uiState.contents.size,
+                    contentsSize = uiState.contents.size
+                )
+            }
+            item{
+                AddItem(
+                    saveNote = saveNote,
+                    addItem = addItem,
+                    newItem = newItem
                 )
             }
         }
-        AddItem(
-            saveNote = saveNote,
-            addItem = addItem,
-            newItem = newItem
-        )
     }
 }
 
@@ -280,20 +283,12 @@ fun NoteContentRow(
                         line = content.line
                     ), content.id)
             },
-            colors = CheckboxColors(
-                // TODO: These colors could be better
-                checkedCheckmarkColor = MaterialTheme.colorScheme.onSecondary,
-                uncheckedCheckmarkColor = MaterialTheme.colorScheme.onTertiary,
-                checkedBoxColor = MaterialTheme.colorScheme.secondary,
-                uncheckedBoxColor = MaterialTheme.colorScheme.secondary,
-                disabledCheckedBoxColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                disabledUncheckedBoxColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                disabledIndeterminateBoxColor = MaterialTheme.colorScheme.surfaceContainer,
-                checkedBorderColor = MaterialTheme.colorScheme.outline,
-                uncheckedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                disabledUncheckedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                disabledIndeterminateBorderColor = MaterialTheme.colorScheme.surfaceContainer,
+            colors = CheckboxDefaults.colors().copy(
+                // Still could be better, especially for light theme
+                // But I'll leave them like this, for now...
+                checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
+                checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer
             ),
             modifier = Modifier.align(Alignment.CenterVertically)
         )
@@ -315,7 +310,6 @@ fun NoteContentRow(
             ),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
-                // TODO: Better action?
                 imeAction = ImeAction.Next
             ),
             keyboardActions = KeyboardActions(
