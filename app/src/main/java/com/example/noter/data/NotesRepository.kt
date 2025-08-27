@@ -16,7 +16,7 @@ interface NotesRepository {
     //suspend fun deleteNoteAndContent(noteAndContent: NoteAndContent)
     //suspend fun updateNoteAndContent(noteAndContent: NoteAndContent)
 
-    suspend fun insertNote(note: Note)
+    suspend fun insertNote(note: Note): Long
     suspend fun deleteNote(note: Note)
     suspend fun updateNote(note: Note)
 

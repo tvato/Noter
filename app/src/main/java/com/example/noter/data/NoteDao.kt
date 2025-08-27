@@ -36,7 +36,7 @@ interface NoteDao {
 
     // Modifying database
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertNote(note: Note)
+    suspend fun insertNote(note: Note): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertContent(content: Content)

@@ -16,7 +16,7 @@ class OfflineNotesRepository(private val noteDao: NoteDao): NotesRepository {
     //override suspend fun deleteNoteAndContent(noteAndContent: NoteAndContent) = noteDao.deleteNoteAndContent(noteAndContent)
     //override suspend fun updateNoteAndContent(noteAndContent: NoteAndContent) = noteDao.updateNoteAndContent(noteAndContent)
 
-    override suspend fun insertNote(note: Note) = noteDao.insertNote(note)
+    override suspend fun insertNote(note: Note): Long = noteDao.insertNote(note)
     override suspend fun deleteNote(note: Note) = noteDao.deleteNote(note)
     override suspend fun updateNote(note: Note) = noteDao.updateNote(note)
 
