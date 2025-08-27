@@ -1,5 +1,8 @@
 package com.example.noter.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.noter.data.Note
@@ -18,6 +21,7 @@ data class NoteUiState(
 class HomeScreenViewModel(
     private val notesRepository: NotesRepository
 ): ViewModel() {
+    var noteId by mutableIntStateOf(-1)
     val uiState: StateFlow<NoteUiState> = notesRepository.getAllNotesWithContent()
         .map{
             NoteUiState(changeType(it))
@@ -34,7 +38,8 @@ class HomeScreenViewModel(
         )
 
         viewModelScope.launch{
-            notesRepository.insertNote(newNote)
+            val newNoteId = notesRepository.insertNote(newNote)
+            noteId = newNoteId.toInt()
         }
     }
 }

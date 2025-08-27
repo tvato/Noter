@@ -22,9 +22,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,11 +43,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.noter.R
 import com.example.noter.data.Content
-import com.example.noter.data.Note
 import com.example.noter.data.NoteAndContent
 import com.example.noter.ui.components.AppBar
 import com.example.noter.ui.navigation.NavigationDestination
-import com.example.noter.ui.theme.NoterTheme
 
 object HomeScreenDestination: NavigationDestination {
     override val route = "home"
@@ -58,12 +58,26 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ){
     val uiState = viewModel.uiState.collectAsState()
+    val newNoteType = remember { mutableIntStateOf(-1) }
+
+    LaunchedEffect(viewModel.noteId) {
+        if(viewModel.noteId == -1) return@LaunchedEffect
+
+        if(newNoteType.intValue == 0){
+            navigateToNote("0/${viewModel.noteId}")
+        }else{
+            navigateToNote("1/${viewModel.noteId}")
+        }
+
+        viewModel.noteId = -1
+    }
 
     HomeScreenContainer(
         navigateToNote = navigateToNote,
         switchMode = switchMode,
         addNote = viewModel::addNote,
-        uiState = uiState
+        uiState = uiState,
+        newNoteType = newNoteType
     )
 }
 
@@ -72,7 +86,8 @@ fun HomeScreenContainer(
     navigateToNote: (String) -> Unit,
     switchMode: () -> Unit,
     addNote: (Byte) -> Unit,
-    uiState: State<NoteUiState>
+    uiState: State<NoteUiState>,
+    newNoteType: MutableState<Int>
 ){
     Scaffold(
         topBar = {
@@ -80,7 +95,8 @@ fun HomeScreenContainer(
         },
         floatingActionButton = {
             CustomFloater(
-                addNote = addNote
+                addNote = addNote,
+                newNoteType = newNoteType
             )
         },
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -96,11 +112,12 @@ fun HomeScreenContainer(
 
 @Composable
 fun CustomFloater(
-    addNote: (Byte) -> Unit
+    addNote: (Byte) -> Unit,
+    newNoteType: MutableState<Int>
 ){
     val types = listOf(
         R.drawable.text,
-       R.drawable.checkbox
+        R.drawable.checkbox
     )
     val noteMenuVisible = remember { mutableStateOf(false) }
     Column{
@@ -109,7 +126,8 @@ fun CustomFloater(
                 FloaterItem(
                     image = type,
                     addNote = addNote,
-                    noteMenuVisible = noteMenuVisible
+                    noteMenuVisible = noteMenuVisible,
+                    newNoteType = newNoteType
                 )
             }
         }else{
@@ -138,15 +156,17 @@ fun CustomFloater(
 fun FloaterItem(
     image: Int,
     addNote: (Byte) -> Unit,
-    noteMenuVisible: MutableState<Boolean>
+    noteMenuVisible: MutableState<Boolean>,
+    newNoteType: MutableState<Int>
 ){
+
     FloatingActionButton(
-        // TODO: Navigate after addNote...
-        //       Also, change icons
         onClick = {
             if(image == R.drawable.text){
+                newNoteType.value = 0
                 addNote(0)
             }else{
+                newNoteType.value = 1
                 addNote(1)
             }
             noteMenuVisible.value = !noteMenuVisible.value
@@ -275,33 +295,34 @@ fun ContentRow(
     }
 }
 
-@PreviewLightDark
-@Composable
-fun HomeScreenPreview(){
-    val noteList: MutableList<NoteAndContent> = mutableListOf(
-        NoteAndContent(
-            Note(1, "Preview title 1", 0),
-            listOf(
-                Content(1, 1, "Long preview text to show something.\nHere some new lines.\nAnd stuff.\nAnd more stuff.\nAnd some more.", false, 0, 0)
-            )
-        ),
-        NoteAndContent(
-            Note(1, "Preview title 2", 1),
-            listOf(
-                Content(3, 1, "Preview text 3", false, 0, 0),
-                Content(4, 1, "Preview text 4", true, 0, 1),
-                Content(5, 1, "Preview text 5", false, 0, 2),
-                Content(6, 1, "Preview text 6", true, 0, 3)
-            )
-        )
-    )
-
-    NoterTheme {
-        HomeScreenContainer(
-            navigateToNote = {},
-            switchMode = {},
-            addNote = {},
-            uiState = remember { mutableStateOf(NoteUiState(noteList)) }
-        )
-    }
-}
+//@PreviewLightDark
+//@Composable
+//fun HomeScreenPreview(){
+//    val noteList: MutableList<NoteAndContent> = mutableListOf(
+//        NoteAndContent(
+//            Note(1, "Preview title 1", 0),
+//            listOf(
+//                Content(1, 1, "Long preview text to show something.\nHere some new lines.\nAnd stuff.\nAnd more stuff.\nAnd some more.", false, 0, 0)
+//            )
+//        ),
+//        NoteAndContent(
+//            Note(1, "Preview title 2", 1),
+//            listOf(
+//                Content(3, 1, "Preview text 3", false, 0, 0),
+//                Content(4, 1, "Preview text 4", true, 0, 1),
+//                Content(5, 1, "Preview text 5", false, 0, 2),
+//                Content(6, 1, "Preview text 6", true, 0, 3)
+//            )
+//        )
+//    )
+//
+//    NoterTheme {
+//        HomeScreenContainer(
+//            navigateToNote = {},
+//            switchMode = {},
+//            addNote = {},
+//            uiState = remember { mutableStateOf(NoteUiState(noteList)) },
+//            noteId = -1
+//        )
+//    }
+//}
