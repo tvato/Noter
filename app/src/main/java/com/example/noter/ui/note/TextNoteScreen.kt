@@ -21,14 +21,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.noter.ui.AppViewModelProvider
 import com.example.noter.ui.components.AppBar
-import com.example.noter.ui.theme.NoterTheme
 
 @Composable
 fun TextNoteScreen(
