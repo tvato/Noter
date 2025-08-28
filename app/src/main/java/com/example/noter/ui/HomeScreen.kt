@@ -294,35 +294,3 @@ fun ContentRow(
         )
     }
 }
-
-//@PreviewLightDark
-//@Composable
-//fun HomeScreenPreview(){
-//    val noteList: MutableList<NoteAndContent> = mutableListOf(
-//        NoteAndContent(
-//            Note(1, "Preview title 1", 0),
-//            listOf(
-//                Content(1, 1, "Long preview text to show something.\nHere some new lines.\nAnd stuff.\nAnd more stuff.\nAnd some more.", false, 0, 0)
-//            )
-//        ),
-//        NoteAndContent(
-//            Note(1, "Preview title 2", 1),
-//            listOf(
-//                Content(3, 1, "Preview text 3", false, 0, 0),
-//                Content(4, 1, "Preview text 4", true, 0, 1),
-//                Content(5, 1, "Preview text 5", false, 0, 2),
-//                Content(6, 1, "Preview text 6", true, 0, 3)
-//            )
-//        )
-//    )
-//
-//    NoterTheme {
-//        HomeScreenContainer(
-//            navigateToNote = {},
-//            switchMode = {},
-//            addNote = {},
-//            uiState = remember { mutableStateOf(NoteUiState(noteList)) },
-//            noteId = -1
-//        )
-//    }
-//}
