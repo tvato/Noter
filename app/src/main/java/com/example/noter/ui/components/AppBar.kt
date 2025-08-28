@@ -105,24 +105,3 @@ fun AppBar(                                     // Used in TodoNoteScreen.kt
         }
     )
 }
-
-@PreviewLightDark
-@Composable
-fun AppBarPreview(){
-    NoterTheme{
-        AppBar(switchMode = {})
-    }
-}
-
-@PreviewLightDark
-@Composable
-fun NoteAppBarPreview(){
-    NoterTheme{
-        AppBar(
-            navigateBack = {},
-            canNavigateBack = true,
-            deleteNote = {},
-            saveNote = {}
-        )
-    }
-}
