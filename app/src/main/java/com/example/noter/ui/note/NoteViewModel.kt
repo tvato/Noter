@@ -64,7 +64,8 @@ class NoteViewModel(
                         text = content.text,
                         checked = content.checked,
                         offset = content.offset,
-                        line = content.line + 1
+                        line = content.line + 1,
+                        group = content.group
                     )
                 )
             }else{
@@ -82,19 +83,20 @@ class NoteViewModel(
         }
     }
 
-    fun addItem(offset: Int, line: Int){
+    fun addItem(offset: Int, line: Int, group: Int){
         if(line != -1){
             updateLineNum(line)
         }
 
-        val newLine = if(noteState.contents.isEmpty()) 0 else if(line == -1) noteState.contents.last().line + 1 else line
+        val newLine = if(noteState.contents.isEmpty()) 1 else if(line == -1) noteState.contents.last().line + 1 else line
 
         val newContent = Content(
             noteId = noteId,
             text = "",
             checked = false,
             offset = offset,
-            line = newLine
+            line = newLine,
+            group = group
         )
 
         viewModelScope.launch{
@@ -152,7 +154,8 @@ class NoteViewModel(
                         text = newText,
                         checked = false,
                         offset = 0,
-                        line = 0
+                        line = 1,
+                        group = 0
                     )
                 }else{
                     noteState.contents[0].copy(text = newText)
@@ -183,6 +186,8 @@ fun NoteAndContent.toNoteState(): NoteState = NoteState(
             text = "",
             checked = false,
             offset = 0,
-            line = 0)
+            line = 1,
+            group = 0
+        )
     ) else this.contents.sortedBy { it.line }
 )

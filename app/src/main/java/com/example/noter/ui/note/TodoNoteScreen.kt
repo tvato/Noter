@@ -1,5 +1,6 @@
 package com.example.noter.ui.note
 
+import android.util.Log
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -26,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -46,8 +48,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -122,7 +127,7 @@ fun NoteBody(
     updateContent: (Content, Int) -> Unit,
     deleteContent: (Content) -> Unit,
     saveNote: () -> Unit,
-    addItem: (Int, Int) -> Unit
+    addItem: (Int, Int, Int) -> Unit
 ){
     val newItem = remember { mutableStateOf(false) }
 
@@ -140,7 +145,7 @@ fun NoteBody(
         )
         LazyColumn(modifier = Modifier.padding(0.dp)){
             itemsIndexed(uiState.contents){ index, content ->
-                NoteContentRow(
+                if(!content.checked) NoteContentRow(
                     updateContent = updateContent,
                     deleteContent = deleteContent,
                     content = content,
@@ -148,7 +153,9 @@ fun NoteBody(
                     newItem = newItem,
                     saveNote = saveNote,
                     addItem = addItem,
-                    contentsSize = uiState.contents.size
+                    contentsSize = uiState.contents.size,
+                    previousItemGroupId = if(index != 0) uiState.contents[index-1].group else 0,
+                    previousContent = if(index != 0) uiState.contents[index-1] else Content(0,0,"",false, 0, 1, 0)
                 )
             }
             item{
@@ -156,6 +163,14 @@ fun NoteBody(
                     saveNote = saveNote,
                     addItem = addItem,
                     newItem = newItem
+                )
+            }
+            itemsIndexed(uiState.contents){ index, content ->
+                if(content.checked) CheckedItems(
+                    updateContent = updateContent,
+                    deleteContent = deleteContent,
+                    content = content,
+                    aboveOffset = if(index != 0) uiState.contents[index-1].offset else 0
                 )
             }
         }
@@ -166,7 +181,7 @@ fun NoteBody(
 fun NoteTitle(
     uiState: NoteState,
     updateTitleState: (String) -> Unit,
-    addItem: (Int, Int) -> Unit,
+    addItem: (Int, Int, Int) -> Unit,
     saveNote: () -> Unit,
     newItem: MutableState<Boolean>
 ){
@@ -183,7 +198,7 @@ fun NoteTitle(
         keyboardActions = KeyboardActions(
             onGo = {
                 saveNote()
-                addItem(0, -1)
+                addItem(0, -1, 0)
                 newItem.value = true
             }
         ),
@@ -198,16 +213,19 @@ fun NoteContentRow(
     updateContent: (Content, Int) -> Unit,
     deleteContent: (Content) -> Unit,
     content: Content,
-    aboveOffset: Int,
+    aboveOffset: Int,                   // This can be removed
     newItem: MutableState<Boolean>,
     saveNote: () -> Unit,
-    addItem: (Int, Int) -> Unit,
-    contentsSize: Int
+    addItem: (Int, Int, Int) -> Unit,
+    contentsSize: Int,
+    previousItemGroupId: Int,           // This can be removed
+    previousContent: Content
 ){
     var isFocused by remember { mutableStateOf(false) }
     var offset = content.offset
     val newItemFocus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
+    var groupId = 0
 
     // Transfers focus to new TextField
     LaunchedEffect(newItem){
@@ -222,7 +240,7 @@ fun NoteContentRow(
             .height(40.dp)
             .onFocusChanged { isFocused = it.isFocused }
             .background(MaterialTheme.colorScheme.secondaryContainer)
-            .offset { IntOffset(offset, 0) }
+            .offset { IntOffset(offset.toInt(), 0) }
     ){
         if(isFocused) {
             if(offset > 0) Icon(
@@ -236,14 +254,11 @@ fun NoteContentRow(
                         offset -= 100
 
                         updateContent(
-                            Content(
-                                id = content.id,
-                                noteId = content.noteId,
-                                text = content.text,
-                                checked = content.checked,
+                            content.copy(
                                 offset = offset,
-                                line = content.line
-                            ), content.id
+                                group = if(offset > 0) content.group else 0
+                            ),
+                            content.id
                         )
                     }
             )
@@ -255,17 +270,23 @@ fun NoteContentRow(
                     .align(Alignment.CenterVertically)
                     .offset(x = 10.dp)
                     .clickable {
-                        if (aboveOffset == 0) { offset = 100 }
-                        else { if (offset + aboveOffset <= aboveOffset + 100) offset += aboveOffset }
+                        if (aboveOffset == 0) {
+                            offset = 100
+                            groupId = previousContent.line
+                            updateContent(
+                                previousContent.copy(group = groupId),
+                                previousContent.id
+                            )
+                        } else if (offset + aboveOffset <= aboveOffset + 100) {
+                            offset += aboveOffset
+                            groupId = previousContent.group
+                        }
                         updateContent(
-                            Content(
-                                id = content.id,
-                                noteId = content.noteId,
-                                text = content.text,
-                                checked = content.checked,
+                            content.copy(
                                 offset = offset,
-                                line = content.line
-                            ), content.id
+                                group = groupId
+                            ),
+                            content.id
                         )
                     }
             )
@@ -274,14 +295,8 @@ fun NoteContentRow(
             checked = content.checked,
             onCheckedChange = {
                 updateContent(
-                    Content(
-                        id = content.id,
-                        noteId = content.noteId,
-                        text = content.text,
-                        checked = it,
-                        offset = content.offset,
-                        line = content.line
-                    ), content.id)
+                    content.copy(checked = it),
+                    content.id)
             },
             colors = CheckboxDefaults.colors().copy(
                 // Still could be better, especially for light theme
@@ -296,14 +311,8 @@ fun NoteContentRow(
             value = content.text,
             onValueChange = {
                 updateContent(
-                    Content(
-                        id = content.id,
-                        noteId = content.noteId,
-                        text = it,
-                        checked = content.checked,
-                        offset = content.offset,
-                        line = content.line
-                    ), content.id)
+                    content.copy(text = it),
+                    content.id)
             },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -315,8 +324,8 @@ fun NoteContentRow(
             keyboardActions = KeyboardActions(
                 onNext = {
                     saveNote()
-                    addItem(offset, content.line + 1)
-                    if(content.line + 1 == contentsSize) newItem.value = true
+                    addItem(offset, content.line + 1, previousContent.group)
+                    if(content.line == contentsSize) newItem.value = true
                     focusManager.moveFocus(FocusDirection.Down)
                 }
             ),
@@ -340,7 +349,7 @@ fun NoteContentRow(
 @Composable
 fun AddItem(
     saveNote: () -> Unit,
-    addItem: (Int, Int) -> Unit,
+    addItem: (Int, Int, Int) -> Unit,
     newItem: MutableState<Boolean>
 ){
     Surface(
@@ -349,7 +358,7 @@ fun AddItem(
             .padding(start = 20.dp, top = 10.dp),
         onClick = {
             saveNote()
-            addItem(0, -1)
+            addItem(0, -1, 0)
             newItem.value = true
         },
         color = MaterialTheme.colorScheme.secondaryContainer
@@ -373,40 +382,62 @@ fun AddItem(
     }
 }
 
-@PreviewLightDark
 @Composable
-fun TodoNoteScreenPreview(){
-    val contents: List<Content> = listOf(
-        Content(1, 1, "Preview line 1", true, 0, 0),
-        Content(2, 1, "Preview line 2", false, 0, 1),
-        Content(3, 1, "Preview line 3", false, 0, 1)
-    )
-    val uiState = NoteState(
-        Note(1,"Preview title", 1),
-        contents
-    )
-
-    NoterTheme{
-        Scaffold(
-            topBar = {
-                AppBar(
-                    navigateBack = {},
-                    canNavigateBack = true,
-                    deleteNote = {},
-                    saveNote = {}
-                )
+fun CheckedItems(
+    updateContent: (Content, Int) -> Unit,
+    deleteContent: (Content) -> Unit,
+    content: Content,
+    aboveOffset: Int
+){
+    // TODO: Check all child items, when parent is checked
+    //       Also, show parent (as a triStateCheckBox?) at the bottom when child item is checked
+    //       TriStateCheckbox could also be useful to be used in NoteContentRow
+    //          - When child item is checked, parent item gets "mid" checkmark
+    //          - Might even be better than moving checked items to bottom...
+    val checkboxState = when {
+        aboveOffset > 0 -> ToggleableState.Indeterminate
+        else -> ToggleableState.Off
+    }
+    Row(
+        modifier = Modifier
+            .height(40.dp)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .offset { IntOffset(content.offset, 0) }
+    ){
+        TriStateCheckbox(
+            state = checkboxState,
+            onClick = {
+                updateContent(
+                    content.copy(checked = false),
+                    content.id)
             },
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        ){ innerPadding ->
-            NoteBody(
-                uiState = uiState,
-                innerPadding = innerPadding,
-                updateTitleState = {},
-                updateContent = {_, _ ->},
-                deleteContent = {},
-                saveNote = {},
-                addItem = {_,_ ->},
-            )
-        }
+            colors = CheckboxDefaults.colors().copy(
+                // Still could be better, especially for light theme
+                // But I'll leave them like this, for now...
+                checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
+                checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ),
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+        BasicTextField(
+            value = content.text,
+            onValueChange = {
+                updateContent(
+                    content.copy(text = it),
+                    content.id)
+            },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textDecoration = TextDecoration.LineThrough
+            ),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Next
+            ),
+            modifier =  Modifier
+                .align(Alignment.CenterVertically)
+                .weight(1f)
+        )
     }
 }

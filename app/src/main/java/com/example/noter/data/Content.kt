@@ -21,5 +21,6 @@ data class Content(
     val text: String,
     val checked: Boolean,
     val offset: Int,
-    val line: Int
+    val line: Int,
+    val group: Int
 )
