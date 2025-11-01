@@ -17,7 +17,7 @@ Some pics might come later.
 ### Future plans
 - Make a widget
 - Make multiple note types:
-    - TODO -list
-    - Text note
+    - TODO -list    ( DONE )
+    - Text note     ( DONE )
     - Drawing note?
     - Voice note?
