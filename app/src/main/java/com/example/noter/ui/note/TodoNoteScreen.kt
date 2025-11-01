@@ -1,6 +1,5 @@
 package com.example.noter.ui.note
 
-import android.util.Log
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -20,7 +19,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,18 +40,15 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.state.ToggleableState
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
@@ -61,10 +56,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.noter.R
 import com.example.noter.data.Content
-import com.example.noter.data.Note
 import com.example.noter.ui.AppViewModelProvider
 import com.example.noter.ui.components.AppBar
-import com.example.noter.ui.theme.NoterTheme
 
 @Composable
 fun TodoNoteScreen(
@@ -85,6 +78,7 @@ fun TodoNoteScreen(
             val isVisible = ViewCompat.getRootWindowInsets(rootView)?.isVisible(WindowInsetsCompat.Type.ime()) ?: true
             if(!isVisible){
                 manager.clearFocus()
+                viewModel.saveNote()
             }
         }
         viewTree.addOnGlobalLayoutListener(listener)
@@ -95,6 +89,7 @@ fun TodoNoteScreen(
         viewModel.saveNote()
         navigateBack()
     }
+
 
     Scaffold(
         topBar = {
@@ -114,7 +109,12 @@ fun TodoNoteScreen(
             updateContent = viewModel::updateContent,
             deleteContent = viewModel::deleteContent,
             saveNote = viewModel::saveNote,
-            addItem = viewModel::addItem
+            addItem = viewModel::addItem,
+            isParent = viewModel::isParent,
+            findParent = viewModel::findParent,
+            checkChecked = viewModel::checkChecked,
+            checkAllAndUpdate = viewModel::checkAllAndUpdate,
+            uncheckAllAndUpdate = viewModel::uncheckAllAndUpdate
         )
     }
 }
@@ -127,7 +127,12 @@ fun NoteBody(
     updateContent: (Content, Int) -> Unit,
     deleteContent: (Content) -> Unit,
     saveNote: () -> Unit,
-    addItem: (Int, Int, Int) -> Unit
+    addItem: (Int, Int, Int) -> Unit,
+    isParent: (Int) -> Boolean,
+    findParent: (Content, Int) -> Content?,
+    checkChecked: (Int) -> Int,
+    checkAllAndUpdate: (Int) -> Unit,
+    uncheckAllAndUpdate: (Int) -> Unit
 ){
     val newItem = remember { mutableStateOf(false) }
 
@@ -145,18 +150,21 @@ fun NoteBody(
         )
         LazyColumn(modifier = Modifier.padding(0.dp)){
             itemsIndexed(uiState.contents){ index, content ->
-                if(!content.checked) NoteContentRow(
-                    updateContent = updateContent,
-                    deleteContent = deleteContent,
-                    content = content,
-                    aboveOffset = if(index != 0) uiState.contents[index-1].offset else 0,
-                    newItem = newItem,
-                    saveNote = saveNote,
-                    addItem = addItem,
-                    contentsSize = uiState.contents.size,
-                    previousItemGroupId = if(index != 0) uiState.contents[index-1].group else 0,
-                    previousContent = if(index != 0) uiState.contents[index-1] else Content(0,0,"",false, 0, 1, 0)
-                )
+                if(!content.checked)
+                    NoteContentRow(
+                        updateContent = updateContent,
+                        deleteContent = deleteContent,
+                        content = content,
+                        newItem = newItem,
+                        saveNote = saveNote,
+                        addItem = addItem,
+                        contentsSize = uiState.contents.size,
+                        previousContent = if(index != 0) uiState.contents[index-1] else Content(0,0,"",false, 0, 1, 0),
+                        isParent = isParent,
+                        findParent = findParent,
+                        checkChecked = checkChecked,
+                        checkAllAndUpdate = checkAllAndUpdate
+                    )
             }
             item{
                 AddItem(
@@ -166,12 +174,16 @@ fun NoteBody(
                 )
             }
             itemsIndexed(uiState.contents){ index, content ->
-                if(content.checked) CheckedItems(
-                    updateContent = updateContent,
-                    deleteContent = deleteContent,
-                    content = content,
-                    aboveOffset = if(index != 0) uiState.contents[index-1].offset else 0
-                )
+                if(content.checked || (isParent(content.id) && checkChecked(content.id) > 0)){
+                    CheckedItems(
+                        updateContent = updateContent,
+                        content = content,
+                        isParent = isParent,
+                        uncheckAllAndUpdate = uncheckAllAndUpdate,
+                        findParent = findParent,
+                        checkChecked = checkChecked
+                    )
+                }
             }
         }
     }
@@ -213,19 +225,28 @@ fun NoteContentRow(
     updateContent: (Content, Int) -> Unit,
     deleteContent: (Content) -> Unit,
     content: Content,
-    aboveOffset: Int,                   // This can be removed
     newItem: MutableState<Boolean>,
     saveNote: () -> Unit,
     addItem: (Int, Int, Int) -> Unit,
     contentsSize: Int,
-    previousItemGroupId: Int,           // This can be removed
-    previousContent: Content
+    previousContent: Content,
+    isParent: (Int) -> Boolean,
+    findParent: (Content, Int) -> Content?,
+    checkChecked: (Int) -> Int,
+    checkAllAndUpdate: (Int) -> Unit
 ){
     var isFocused by remember { mutableStateOf(false) }
     var offset = content.offset
     val newItemFocus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-    var groupId = 0
+
+    val toggleFull = checkChecked(content.id)
+    val triState = when(toggleFull) {
+        0 -> ToggleableState.Off
+        1 -> ToggleableState.Indeterminate
+        2 -> ToggleableState.On
+        else -> ToggleableState.Off
+    }
 
     // Transfers focus to new TextField
     LaunchedEffect(newItem){
@@ -252,17 +273,16 @@ fun NoteContentRow(
                     .offset(x = 5.dp)
                     .clickable {
                         offset -= 100
-
                         updateContent(
                             content.copy(
                                 offset = offset,
-                                group = if(offset > 0) content.group else 0
+                                parent = findParent(content, offset)?.id ?: 0 //if (offset > 0) content.parent else 0
                             ),
                             content.id
                         )
                     }
             )
-            Icon(
+            if(offset < 200) Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.arrow_right),
                 contentDescription = stringResource(R.string.description_indent),
                 modifier = Modifier
@@ -270,43 +290,60 @@ fun NoteContentRow(
                     .align(Alignment.CenterVertically)
                     .offset(x = 10.dp)
                     .clickable {
-                        if (aboveOffset == 0) {
+                        if (previousContent.offset == 0) {
                             offset = 100
-                            groupId = previousContent.line
                             updateContent(
-                                previousContent.copy(group = groupId),
-                                previousContent.id
+                                content.copy(parent = previousContent.id, offset = offset),
+                                content.id
                             )
-                        } else if (offset + aboveOffset <= aboveOffset + 100) {
-                            offset += aboveOffset
-                            groupId = previousContent.group
+                        }else{
+                            offset += 100
+                            updateContent(
+                                content.copy(
+                                    offset = offset,
+                                    parent = findParent(content, offset)?.id ?: 1
+                                ),
+                                content.id
+                            )
                         }
-                        updateContent(
-                            content.copy(
-                                offset = offset,
-                                group = groupId
-                            ),
-                            content.id
-                        )
                     }
             )
         }
-        Checkbox(
-            checked = content.checked,
-            onCheckedChange = {
-                updateContent(
-                    content.copy(checked = it),
-                    content.id)
-            },
-            colors = CheckboxDefaults.colors().copy(
-                // Still could be better, especially for light theme
-                // But I'll leave them like this, for now...
-                checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
-                checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
-            modifier = Modifier.align(Alignment.CenterVertically)
-        )
+        if(isParent(content.id)){
+            TriStateCheckbox(
+                state = triState,
+                onClick = {
+                    checkAllAndUpdate(content.id)
+                },
+                modifier = Modifier.align(Alignment.CenterVertically),
+                colors = CheckboxDefaults.colors().copy(
+                    // Still could be better, especially for light theme
+                    // But I'll leave them like this, for now...
+                    checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
+                    checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            )
+        }else{
+            Checkbox(
+                checked = content.checked,
+                onCheckedChange = {
+                    updateContent(
+                        content.copy(checked = it),
+                        content.id
+                    )
+                },
+                colors = CheckboxDefaults.colors().copy(
+                    // Still could be better, especially for light theme
+                    // But I'll leave them like this, for now...
+                    checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
+                    checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
+
+                ),
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
         BasicTextField(
             value = content.text,
             onValueChange = {
@@ -324,7 +361,7 @@ fun NoteContentRow(
             keyboardActions = KeyboardActions(
                 onNext = {
                     saveNote()
-                    addItem(offset, content.line + 1, previousContent.group)
+                    addItem(offset, content.line + 1, findParent(content, offset)?.id ?: 0)
                     if(content.line == contentsSize) newItem.value = true
                     focusManager.moveFocus(FocusDirection.Down)
                 }
@@ -385,17 +422,17 @@ fun AddItem(
 @Composable
 fun CheckedItems(
     updateContent: (Content, Int) -> Unit,
-    deleteContent: (Content) -> Unit,
     content: Content,
-    aboveOffset: Int
+    isParent: (Int) -> Boolean,
+    uncheckAllAndUpdate: (Int) -> Unit,
+    findParent: (Content, Int) -> Content?,
+    checkChecked: (Int) -> Int
 ){
-    // TODO: Check all child items, when parent is checked
-    //       Also, show parent (as a triStateCheckBox?) at the bottom when child item is checked
-    //       TriStateCheckbox could also be useful to be used in NoteContentRow
-    //          - When child item is checked, parent item gets "mid" checkmark
-    //          - Might even be better than moving checked items to bottom...
-    val checkboxState = when {
-        aboveOffset > 0 -> ToggleableState.Indeterminate
+    val toggleFull = checkChecked(content.id)
+    val triState = when(toggleFull) {
+        0 -> ToggleableState.Off
+        1 -> ToggleableState.Indeterminate
+        2 -> ToggleableState.On
         else -> ToggleableState.Off
     }
     Row(
@@ -404,22 +441,49 @@ fun CheckedItems(
             .background(MaterialTheme.colorScheme.secondaryContainer)
             .offset { IntOffset(content.offset, 0) }
     ){
-        TriStateCheckbox(
-            state = checkboxState,
-            onClick = {
-                updateContent(
-                    content.copy(checked = false),
-                    content.id)
-            },
-            colors = CheckboxDefaults.colors().copy(
-                // Still could be better, especially for light theme
-                // But I'll leave them like this, for now...
-                checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
-                checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
-            modifier = Modifier.align(Alignment.CenterVertically)
-        )
+        if(isParent(content.id)) {
+            TriStateCheckbox(
+                state = triState,
+                onClick = {
+                    uncheckAllAndUpdate(content.id)
+                },
+                colors = CheckboxDefaults.colors().copy(
+                    // Still could be better, especially for light theme
+                    // But I'll leave them like this, for now...
+                    checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
+                    checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }else{
+            Checkbox(
+                checked = content.checked,
+                onCheckedChange = {
+                    if(content.parent != 0){
+                        val parentContent = findParent(content, content.offset) ?: Content(
+                            0,0,"This should have not happened... I'm sorry...",false,0,0,0
+                        )
+                        updateContent(
+                            parentContent.copy(checked = false),
+                            content.parent
+                        )
+                    }
+                    updateContent(
+                        content.copy(checked = it),
+                        content.id
+                    )
+                },
+                colors = CheckboxDefaults.colors().copy(
+                    // Still could be better, especially for light theme
+                    // But I'll leave them like this, for now...
+                    checkedBoxColor = MaterialTheme.colorScheme.inversePrimary,
+                    checkedBorderColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
         BasicTextField(
             value = content.text,
             onValueChange = {

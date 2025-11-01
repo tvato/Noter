@@ -23,7 +23,7 @@ data class NoteState(
 class NoteViewModel(
     savedStateHandle: SavedStateHandle,
     private val notesRepository: NotesRepository
-): ViewModel() {
+    ): ViewModel() {
 
     private val noteId: Int = checkNotNull(savedStateHandle[NoteScreenDestination.NOTE_ID])
 
@@ -65,7 +65,7 @@ class NoteViewModel(
                         checked = content.checked,
                         offset = content.offset,
                         line = content.line + 1,
-                        group = content.group
+                        parent = content.parent
                     )
                 )
             }else{
@@ -83,7 +83,7 @@ class NoteViewModel(
         }
     }
 
-    fun addItem(offset: Int, line: Int, group: Int){
+    fun addItem(offset: Int, line: Int, parent: Int){
         if(line != -1){
             updateLineNum(line)
         }
@@ -96,7 +96,7 @@ class NoteViewModel(
             checked = false,
             offset = offset,
             line = newLine,
-            group = group
+            parent = parent
         )
 
         viewModelScope.launch{
@@ -155,7 +155,7 @@ class NoteViewModel(
                         checked = false,
                         offset = 0,
                         line = 1,
-                        group = 0
+                        parent = 0
                     )
                 }else{
                     noteState.contents[0].copy(text = newText)
@@ -176,6 +176,80 @@ class NoteViewModel(
             notesRepository.updateContents(noteState.contents)
         }
     }
+
+    fun isParent(id: Int): Boolean {
+        noteState.contents.forEach { c ->
+            if(id == c.parent) return true
+        }
+        return false
+    }
+
+    fun findParent(content: Content, newOffset: Int): Content? {
+        val index = noteState.contents.indexOf(content)
+        for(i in noteState.contents.size downTo 0){
+            if(i >= index) continue
+            if(noteState.contents[i].offset < newOffset){
+                return noteState.contents[i]
+            }
+        }
+        return null
+    }
+
+    fun checkChecked(id: Int): Int {
+        var checkedFound = 0
+        var childrenFound = 0
+        var parentContent = Content(0,0,"",false,0,0,0)
+        noteState.contents.forEach { c ->
+            if(c.id == id){
+                parentContent = c
+            }
+            if(c.parent == id) {
+                childrenFound += 1
+            }
+            if(c.checked && c.parent == id) {
+                checkedFound += 1
+            }
+        }
+
+        when(checkedFound) {
+            0 -> { return 0 }
+            childrenFound -> {
+                updateContent(parentContent.copy(checked = true), id)
+                return 2
+            }
+            else -> { return 1 }
+        }
+    }
+
+    fun checkAllAndUpdate(id: Int){
+        val newContents = mutableListOf<Content>()
+        noteState.contents.forEach { c ->
+            if(c.parent == id || c.id == id){
+                newContents.add(c.copy(checked = true))
+            }else{
+                newContents.add(c)
+            }
+        }
+        noteState = NoteState(
+            note = noteState.note,
+            contents = newContents
+        )
+    }
+
+    fun uncheckAllAndUpdate(id: Int){
+        val newContents = mutableListOf<Content>()
+        noteState.contents.forEach { c ->
+            if(c.parent == id || c.id == id){
+                newContents.add(c.copy(checked = false))
+            }else{
+                newContents.add(c)
+            }
+        }
+        noteState = NoteState(
+            note = noteState.note,
+            contents = newContents
+        )
+    }
 }
 
 fun NoteAndContent.toNoteState(): NoteState = NoteState(
@@ -187,7 +261,7 @@ fun NoteAndContent.toNoteState(): NoteState = NoteState(
             checked = false,
             offset = 0,
             line = 1,
-            group = 0
+            parent = 0
         )
     ) else this.contents.sortedBy { it.line }
 )
