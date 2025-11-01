@@ -22,5 +22,5 @@ data class Content(
     val checked: Boolean,
     val offset: Int,
     val line: Int,
-    val group: Int
+    val parent: Int
 )
