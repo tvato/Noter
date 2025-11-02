@@ -64,11 +64,7 @@ fun TextNoteScreen(
             AppBar(
                 navigateBack = navigateBack,
                 canNavigateBack = canNavigateBack,
-                deleteNote = viewModel::deleteNote,
-                saveNote = {
-                    viewModel.addText(uiState.contents[0])
-                    viewModel::saveTextNote
-                }
+                viewModel = viewModel
             )
         },
         modifier = Modifier.imePadding()

@@ -65,7 +65,6 @@ fun TodoNoteScreen(
     canNavigateBack: Boolean = true,
     viewModel: NoteViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ){
-    val uiState = viewModel.noteState
 
     // Used in DisposableEffect only
     val rootView = LocalView.current
@@ -96,43 +95,22 @@ fun TodoNoteScreen(
             AppBar(
                 navigateBack = navigateBack,
                 canNavigateBack = canNavigateBack,
-                deleteNote = viewModel::deleteNote,
-                saveNote = viewModel::saveNote
+                viewModel = viewModel
             )
         },
         modifier = Modifier.imePadding()
     ){ innerPadding ->
         NoteBody(
-            uiState = uiState,
             innerPadding = innerPadding,
-            updateTitleState = viewModel::updateTitleState,
-            updateContent = viewModel::updateContent,
-            deleteContent = viewModel::deleteContent,
-            saveNote = viewModel::saveNote,
-            addItem = viewModel::addItem,
-            isParent = viewModel::isParent,
-            findParent = viewModel::findParent,
-            checkChecked = viewModel::checkChecked,
-            checkAllAndUpdate = viewModel::checkAllAndUpdate,
-            uncheckAllAndUpdate = viewModel::uncheckAllAndUpdate
+            viewModel = viewModel
         )
     }
 }
 
 @Composable
 fun NoteBody(
-    uiState: NoteState,
     innerPadding: PaddingValues,
-    updateTitleState: (String) -> Unit,
-    updateContent: (Content, Int) -> Unit,
-    deleteContent: (Content) -> Unit,
-    saveNote: () -> Unit,
-    addItem: (Int, Int, Int) -> Unit,
-    isParent: (Int) -> Boolean,
-    findParent: (Content, Int) -> Content?,
-    checkChecked: (Int) -> Int,
-    checkAllAndUpdate: (Int) -> Unit,
-    uncheckAllAndUpdate: (Int) -> Unit
+    viewModel: NoteViewModel
 ){
     val newItem = remember { mutableStateOf(false) }
 
@@ -142,46 +120,31 @@ fun NoteBody(
             .background(MaterialTheme.colorScheme.secondaryContainer)
     ){
         NoteTitle(
-            uiState = uiState,
-            updateTitleState = updateTitleState,
-            addItem = addItem,
-            saveNote = saveNote,
+            viewModel = viewModel,
             newItem = newItem
         )
         LazyColumn(modifier = Modifier.padding(0.dp)){
-            itemsIndexed(uiState.contents){ index, content ->
+            itemsIndexed(viewModel.noteState.contents){ index, content ->
                 if(!content.checked)
                     NoteContentRow(
-                        updateContent = updateContent,
-                        deleteContent = deleteContent,
+                        viewModel = viewModel,
                         content = content,
                         newItem = newItem,
-                        saveNote = saveNote,
-                        addItem = addItem,
-                        contentsSize = uiState.contents.size,
-                        previousContent = if(index != 0) uiState.contents[index-1] else Content(0,0,"",false, 0, 1, 0),
-                        isParent = isParent,
-                        findParent = findParent,
-                        checkChecked = checkChecked,
-                        checkAllAndUpdate = checkAllAndUpdate
+                        contentsSize = viewModel.noteState.contents.size,
+                        previousContent = if(index != 0) viewModel.noteState.contents[index-1] else Content(0,0,"",false, 0, 1, 0),
                     )
             }
             item{
                 AddItem(
-                    saveNote = saveNote,
-                    addItem = addItem,
+                    viewModel = viewModel,
                     newItem = newItem
                 )
             }
-            itemsIndexed(uiState.contents){ index, content ->
-                if(content.checked || (isParent(content.id) && checkChecked(content.id) > 0)){
+            itemsIndexed(viewModel.noteState.contents){ index, content ->
+                if(content.checked || (viewModel.isParent(content.id) && viewModel.checkChecked(content.id) > 0)){
                     CheckedItems(
-                        updateContent = updateContent,
+                        viewModel = viewModel,
                         content = content,
-                        isParent = isParent,
-                        uncheckAllAndUpdate = uncheckAllAndUpdate,
-                        findParent = findParent,
-                        checkChecked = checkChecked
                     )
                 }
             }
@@ -191,15 +154,12 @@ fun NoteBody(
 
 @Composable
 fun NoteTitle(
-    uiState: NoteState,
-    updateTitleState: (String) -> Unit,
-    addItem: (Int, Int, Int) -> Unit,
-    saveNote: () -> Unit,
+    viewModel: NoteViewModel,
     newItem: MutableState<Boolean>
 ){
     BasicTextField(
-        value = uiState.note.title,
-        onValueChange = { updateTitleState(it) },
+        value = viewModel.noteState.note.title,
+        onValueChange = { viewModel.updateTitleState(it) },
         textStyle = MaterialTheme.typography.titleLarge.copy(
             color = MaterialTheme.colorScheme.onSecondaryContainer
         ),
@@ -209,8 +169,8 @@ fun NoteTitle(
         ),
         keyboardActions = KeyboardActions(
             onGo = {
-                saveNote()
-                addItem(0, -1, 0)
+                viewModel.saveNote()
+                viewModel.addItem(0, -1, 0)
                 newItem.value = true
             }
         ),
@@ -222,25 +182,18 @@ fun NoteTitle(
 
 @Composable
 fun NoteContentRow(
-    updateContent: (Content, Int) -> Unit,
-    deleteContent: (Content) -> Unit,
+    viewModel: NoteViewModel,
     content: Content,
     newItem: MutableState<Boolean>,
-    saveNote: () -> Unit,
-    addItem: (Int, Int, Int) -> Unit,
     contentsSize: Int,
     previousContent: Content,
-    isParent: (Int) -> Boolean,
-    findParent: (Content, Int) -> Content?,
-    checkChecked: (Int) -> Int,
-    checkAllAndUpdate: (Int) -> Unit
 ){
     var isFocused by remember { mutableStateOf(false) }
     var offset = content.offset
     val newItemFocus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    val toggleFull = checkChecked(content.id)
+    val toggleFull = viewModel.checkChecked(content.id)
     val triState = when(toggleFull) {
         0 -> ToggleableState.Off
         1 -> ToggleableState.Indeterminate
@@ -273,10 +226,10 @@ fun NoteContentRow(
                     .offset(x = 5.dp)
                     .clickable {
                         offset -= 100
-                        updateContent(
+                        viewModel.updateContent(
                             content.copy(
                                 offset = offset,
-                                parent = findParent(content, offset)?.id ?: 0 //if (offset > 0) content.parent else 0
+                                parent = viewModel.findParent(content, offset)?.id ?: 0 //if (offset > 0) content.parent else 0
                             ),
                             content.id
                         )
@@ -292,16 +245,16 @@ fun NoteContentRow(
                     .clickable {
                         if (previousContent.offset == 0) {
                             offset = 100
-                            updateContent(
+                            viewModel.updateContent(
                                 content.copy(parent = previousContent.id, offset = offset),
                                 content.id
                             )
                         }else{
                             offset += 100
-                            updateContent(
+                            viewModel.updateContent(
                                 content.copy(
                                     offset = offset,
-                                    parent = findParent(content, offset)?.id ?: 1
+                                    parent = viewModel.findParent(content, offset)?.id ?: 1
                                 ),
                                 content.id
                             )
@@ -309,11 +262,11 @@ fun NoteContentRow(
                     }
             )
         }
-        if(isParent(content.id)){
+        if(viewModel.isParent(content.id)){
             TriStateCheckbox(
                 state = triState,
                 onClick = {
-                    checkAllAndUpdate(content.id)
+                    viewModel.checkAllAndUpdate(content.id)
                 },
                 modifier = Modifier.align(Alignment.CenterVertically),
                 colors = CheckboxDefaults.colors().copy(
@@ -328,7 +281,7 @@ fun NoteContentRow(
             Checkbox(
                 checked = content.checked,
                 onCheckedChange = {
-                    updateContent(
+                    viewModel.updateContent(
                         content.copy(checked = it),
                         content.id
                     )
@@ -347,7 +300,7 @@ fun NoteContentRow(
         BasicTextField(
             value = content.text,
             onValueChange = {
-                updateContent(
+                viewModel.updateContent(
                     content.copy(text = it),
                     content.id)
             },
@@ -360,8 +313,8 @@ fun NoteContentRow(
             ),
             keyboardActions = KeyboardActions(
                 onNext = {
-                    saveNote()
-                    addItem(offset, content.line + 1, findParent(content, offset)?.id ?: 0)
+                    viewModel.saveNote()
+                    viewModel.addItem(offset, content.line + 1, viewModel.findParent(content, offset)?.id ?: 0)
                     if(content.line == contentsSize) newItem.value = true
                     focusManager.moveFocus(FocusDirection.Down)
                 }
@@ -377,7 +330,7 @@ fun NoteContentRow(
                 modifier = Modifier
                     .padding(end = 10.dp)
                     .offset { if (offset != 0) IntOffset(-offset, 0) else IntOffset(0, 0) }
-                    .clickable(onClick = { deleteContent(content) })
+                    .clickable(onClick = { viewModel.deleteContent(content) })
         )
     }
 }
@@ -385,8 +338,7 @@ fun NoteContentRow(
 
 @Composable
 fun AddItem(
-    saveNote: () -> Unit,
-    addItem: (Int, Int, Int) -> Unit,
+    viewModel: NoteViewModel,
     newItem: MutableState<Boolean>
 ){
     Surface(
@@ -394,8 +346,8 @@ fun AddItem(
             .fillMaxWidth(1f)
             .padding(start = 20.dp, top = 10.dp),
         onClick = {
-            saveNote()
-            addItem(0, -1, 0)
+            viewModel.saveNote()
+            viewModel.addItem(0, -1, 0)
             newItem.value = true
         },
         color = MaterialTheme.colorScheme.secondaryContainer
@@ -421,14 +373,10 @@ fun AddItem(
 
 @Composable
 fun CheckedItems(
-    updateContent: (Content, Int) -> Unit,
+    viewModel: NoteViewModel,
     content: Content,
-    isParent: (Int) -> Boolean,
-    uncheckAllAndUpdate: (Int) -> Unit,
-    findParent: (Content, Int) -> Content?,
-    checkChecked: (Int) -> Int
 ){
-    val toggleFull = checkChecked(content.id)
+    val toggleFull = viewModel.checkChecked(content.id)
     val triState = when(toggleFull) {
         0 -> ToggleableState.Off
         1 -> ToggleableState.Indeterminate
@@ -441,11 +389,11 @@ fun CheckedItems(
             .background(MaterialTheme.colorScheme.secondaryContainer)
             .offset { IntOffset(content.offset, 0) }
     ){
-        if(isParent(content.id)) {
+        if(viewModel.isParent(content.id)) {
             TriStateCheckbox(
                 state = triState,
                 onClick = {
-                    uncheckAllAndUpdate(content.id)
+                    viewModel.uncheckAllAndUpdate(content.id)
                 },
                 colors = CheckboxDefaults.colors().copy(
                     // Still could be better, especially for light theme
@@ -461,15 +409,15 @@ fun CheckedItems(
                 checked = content.checked,
                 onCheckedChange = {
                     if(content.parent != 0){
-                        val parentContent = findParent(content, content.offset) ?: Content(
+                        val parentContent = viewModel.findParent(content, content.offset) ?: Content(
                             0,0,"This should have not happened... I'm sorry...",false,0,0,0
                         )
-                        updateContent(
+                        viewModel.updateContent(
                             parentContent.copy(checked = false),
                             content.parent
                         )
                     }
-                    updateContent(
+                    viewModel.updateContent(
                         content.copy(checked = it),
                         content.id
                     )
@@ -487,7 +435,7 @@ fun CheckedItems(
         BasicTextField(
             value = content.text,
             onValueChange = {
-                updateContent(
+                viewModel.updateContent(
                     content.copy(text = it),
                     content.id)
             },

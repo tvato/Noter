@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.noter.R
+import com.example.noter.ui.note.NoteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,11 +57,10 @@ fun AppBar(                                     // Used in HomeScreen.kt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppBar(                                     // Used in TodoNoteScreen.kt
+fun AppBar(                                     // Used in Text-/TodoNoteScreen.kt
     navigateBack: () -> Unit,
     canNavigateBack: Boolean,
-    deleteNote: () -> Unit,
-    saveNote: () -> Unit
+    viewModel: NoteViewModel
 ){
     TopAppBar(
         colors = topAppBarColors(
@@ -82,7 +82,7 @@ fun AppBar(                                     // Used in TodoNoteScreen.kt
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .clickable {
-                            deleteNote()
+                            viewModel.deleteNote()
                             navigateBack()
                         }
                 )
@@ -91,7 +91,7 @@ fun AppBar(                                     // Used in TodoNoteScreen.kt
         navigationIcon = {
             if (canNavigateBack) {
                 IconButton(onClick = {
-                    saveNote()
+                    viewModel.saveNote()
                     navigateBack()
                 }) {
                     Icon(
