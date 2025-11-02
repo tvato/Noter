@@ -130,7 +130,6 @@ fun NoteBody(
                         viewModel = viewModel,
                         content = content,
                         newItem = newItem,
-                        contentsSize = viewModel.noteState.contents.size,
                         previousContent = if(index != 0) viewModel.noteState.contents[index-1] else Content(0,0,"",false, 0, 1, 0),
                     )
             }
@@ -185,7 +184,6 @@ fun NoteContentRow(
     viewModel: NoteViewModel,
     content: Content,
     newItem: MutableState<Boolean>,
-    contentsSize: Int,
     previousContent: Content,
 ){
     var isFocused by remember { mutableStateOf(false) }
@@ -193,8 +191,7 @@ fun NoteContentRow(
     val newItemFocus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    val toggleFull = viewModel.checkChecked(content.id)
-    val triState = when(toggleFull) {
+    val triState = when(viewModel.checkChecked(content.id)) {
         0 -> ToggleableState.Off
         1 -> ToggleableState.Indeterminate
         2 -> ToggleableState.On
@@ -315,7 +312,7 @@ fun NoteContentRow(
                 onNext = {
                     viewModel.saveNote()
                     viewModel.addItem(offset, content.line + 1, viewModel.findParent(content, offset)?.id ?: 0)
-                    if(content.line == contentsSize) newItem.value = true
+                    if(content.line == viewModel.noteState.contents.size) newItem.value = true
                     focusManager.moveFocus(FocusDirection.Down)
                 }
             ),
@@ -376,8 +373,7 @@ fun CheckedItems(
     viewModel: NoteViewModel,
     content: Content,
 ){
-    val toggleFull = viewModel.checkChecked(content.id)
-    val triState = when(toggleFull) {
+    val triState = when(viewModel.checkChecked(content.id)) {
         0 -> ToggleableState.Off
         1 -> ToggleableState.Indeterminate
         2 -> ToggleableState.On

@@ -17,6 +17,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.ImeAction
@@ -85,7 +86,9 @@ fun TextNoteScreen(
                     imeAction = ImeAction.Go
                 ),
                 keyboardActions = KeyboardActions(
-                    onGo = {}
+                    onGo = {
+                        manager.moveFocus(FocusDirection.Down)
+                    }
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
